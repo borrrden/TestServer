@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <LangVersion>default</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Couchbase.Lite.Support.NetDesktop" Version="2.0.0-db020" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TestServer\TestServer.csproj" />
+  </ItemGroup>
+
+</Project>
