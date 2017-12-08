@@ -49,7 +49,7 @@ namespace TestClient
 
         public RemoteProxyReplication(RemoteProxyDatabase sourceDb, string targetUrl, bool continuous = false,
             string replicationType = "pushandpull", IDictionary<string, object> authentication = null)
-            : base(Api.ConfigureAsync(sourceDb, targetUrl, continuous, replicationType, authentication).Result)
+            : base(Api.ConfigureAsync(sourceDb, targetUrl, continuous, replicationType, new Dictionary<string, object> { ["auth"] = authentication }).Result)
         {
 
         }
@@ -62,6 +62,7 @@ namespace TestClient
         {
             return new Dictionary<string, object>
             {
+                ["type"] = "basic",
                 ["username"] = username,
                 ["password"] = password
             };
@@ -71,6 +72,7 @@ namespace TestClient
         {
             var retVal = new Dictionary<string, object>
             {
+                ["type"] = "session",
                 ["session"] = sessionId
             };
 
