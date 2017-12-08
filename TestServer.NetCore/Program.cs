@@ -20,6 +20,11 @@
 // 
 
 using System;
+using System.Collections.Generic;
+
+using HandlerAction = System.Action<System.Collections.Specialized.NameValueCollection, 
+    System.Collections.Generic.IReadOnlyDictionary<string, object>, 
+    System.Net.HttpListenerResponse>;
 
 namespace Couchbase.Lite.Testing.NetCore
 {
@@ -27,9 +32,19 @@ namespace Couchbase.Lite.Testing.NetCore
     {
         #region Private Methods
 
+        private static void Extend()
+        {
+            Router.Extend(new Dictionary<string, HandlerAction>
+            {
+                ["start_sync_gateway"] = OrchestrationMethods.StartSyncGateway,
+                ["kill_sync_gateway"] = OrchestrationMethods.KillSyncGateway
+            });
+        }
+
         static void Main(string[] args)
         {
             Couchbase.Lite.Support.NetDesktop.Activate();
+            Extend();
 
             var listener = new TestServer();
             listener.Start();

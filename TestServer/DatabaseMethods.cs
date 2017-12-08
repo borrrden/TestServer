@@ -29,13 +29,26 @@ using Couchbase.Lite.Query;
 
 using JetBrains.Annotations;
 
+using Newtonsoft.Json.Linq;
+
 namespace Couchbase.Lite.Testing
 {
-    internal static class DatabaseMethods
+    public static class DatabaseMethods
     {
         #region Public Methods
 
-        public static void DatabaseAddChangeListener([NotNull] NameValueCollection args,
+        public static void With<T>([NotNull]NameValueCollection args, string key, [NotNull]Action<T> action)
+        {
+            var handle = args.GetLong(key);
+            var db = MemoryMap.Get<T>(handle);
+            action(db);
+        }
+
+        #endregion
+
+        #region Internal Methods
+
+        internal static void DatabaseAddChangeListener([NotNull] NameValueCollection args,
             [NotNull] IReadOnlyDictionary<string, object> postBody,
             [NotNull] HttpListenerResponse response)
         {
@@ -48,35 +61,38 @@ namespace Couchbase.Lite.Testing
             });
         }
 
-        public static void DatabaseAddDocuments([NotNull] NameValueCollection args,
+        internal static void DatabaseAddDocuments([NotNull] NameValueCollection args,
             [NotNull] IReadOnlyDictionary<string, object> postBody,
             [NotNull] HttpListenerResponse response)
         {
             With<Database>(args, "database", db =>
             {
                 foreach (var pair in postBody) {
-                    using (var doc = new MutableDocument(pair.Key, pair.Value as IDictionary<string, object>)) {
+                    var val = (pair.Value as JObject)?.ToObject<IDictionary<string, object>>();
+                    using (var doc = new MutableDocument(pair.Key, val)) {
                         db.Save(doc).Dispose();
                     }
                 }
+
+                response.WriteEmptyBody();
             });
         }
 
-        public static void DatabaseChangeGetDocumentId([NotNull] NameValueCollection args,
+        internal static void DatabaseChangeGetDocumentId([NotNull] NameValueCollection args,
             [NotNull] IReadOnlyDictionary<string, object> postBody,
             [NotNull] HttpListenerResponse response)
         {
             With<DatabaseChangedEventArgs>(args, "change", dc => response.WriteBody(dc.DocumentIDs));
         }
 
-        public static void DatabaseChangeListenerChangesCount([NotNull] NameValueCollection args,
+        internal static void DatabaseChangeListenerChangesCount([NotNull] NameValueCollection args,
             [NotNull] IReadOnlyDictionary<string, object> postBody,
             [NotNull] HttpListenerResponse response)
         {
             With<DatabaseChangeListenerProxy>(args, "changeListener", l => response.WriteBody(l.Changes.Count));
         }
 
-        public static void DatabaseChangeListenerGetChange([NotNull] NameValueCollection args,
+        internal static void DatabaseChangeListenerGetChange([NotNull] NameValueCollection args,
             [NotNull] IReadOnlyDictionary<string, object> postBody,
             [NotNull] HttpListenerResponse response)
         {
@@ -88,7 +104,7 @@ namespace Couchbase.Lite.Testing
             });
         }
 
-        public static void DatabaseClose([NotNull] NameValueCollection args,
+        internal static void DatabaseClose([NotNull] NameValueCollection args,
             [NotNull] IReadOnlyDictionary<string, object> postBody,
             [NotNull] HttpListenerResponse response)
         {
@@ -96,7 +112,7 @@ namespace Couchbase.Lite.Testing
             response.WriteEmptyBody();
         }
 
-        public static void DatabaseContains([NotNull] NameValueCollection args,
+        internal static void DatabaseContains([NotNull] NameValueCollection args,
             [NotNull] IReadOnlyDictionary<string, object> postBody,
             [NotNull] HttpListenerResponse response)
         {
@@ -104,7 +120,7 @@ namespace Couchbase.Lite.Testing
             With<Database>(args, "database", db => response.WriteBody(db.Contains(docId)));
         }
 
-        public static void DatabaseCreate([NotNull]NameValueCollection args, 
+        internal static void DatabaseCreate([NotNull]NameValueCollection args, 
             [NotNull]IReadOnlyDictionary<string, object> postBody,
             [NotNull]HttpListenerResponse response)
         {
@@ -113,7 +129,7 @@ namespace Couchbase.Lite.Testing
             response.WriteBody(databaseId);
         }
 
-        public static void DatabaseDelete([NotNull] NameValueCollection args,
+        internal static void DatabaseDelete([NotNull] NameValueCollection args,
             [NotNull] IReadOnlyDictionary<string, object> postBody,
             [NotNull] HttpListenerResponse response)
         {
@@ -124,14 +140,14 @@ namespace Couchbase.Lite.Testing
             response.WriteEmptyBody();
         }
 
-        public static void DatabaseDocCount([NotNull] NameValueCollection args,
+        internal static void DatabaseDocCount([NotNull] NameValueCollection args,
             [NotNull] IReadOnlyDictionary<string, object> postBody,
             [NotNull] HttpListenerResponse response)
         {
             With<Database>(args, "database", db => response.WriteBody(db.Count));
         }
 
-        public static void DatabaseGetDocIds([NotNull] NameValueCollection args,
+        internal static void DatabaseGetDocIds([NotNull] NameValueCollection args,
             [NotNull] IReadOnlyDictionary<string, object> postBody,
             [NotNull] HttpListenerResponse response)
         {
@@ -148,7 +164,7 @@ namespace Couchbase.Lite.Testing
             });
         }
 
-        public static void DatabaseGetDocument([NotNull] NameValueCollection args,
+        internal static void DatabaseGetDocument([NotNull] NameValueCollection args,
             [NotNull] IReadOnlyDictionary<string, object> postBody,
             [NotNull] HttpListenerResponse response)
         {
@@ -165,7 +181,7 @@ namespace Couchbase.Lite.Testing
             });
         }
 
-        public static void DatabaseGetDocuments([NotNull] NameValueCollection args,
+        internal static void DatabaseGetDocuments([NotNull] NameValueCollection args,
             [NotNull] IReadOnlyDictionary<string, object> postBody,
             [NotNull] HttpListenerResponse response)
         {
@@ -188,21 +204,21 @@ namespace Couchbase.Lite.Testing
             });
         }
 
-        public static void DatabaseGetName([NotNull] NameValueCollection args,
+        internal static void DatabaseGetName([NotNull] NameValueCollection args,
             [NotNull] IReadOnlyDictionary<string, object> postBody,
             [NotNull] HttpListenerResponse response)
         {
             With<Database>(args, "database", db => response.WriteBody(db.Name ?? String.Empty));
         }
 
-        public static void DatabasePath([NotNull] NameValueCollection args,
+        internal static void DatabasePath([NotNull] NameValueCollection args,
             [NotNull] IReadOnlyDictionary<string, object> postBody,
             [NotNull] HttpListenerResponse response)
         {
             With<Database>(args, "database", db => response.WriteBody(db.Path ?? String.Empty));
         }
 
-        public static void DatabaseRemoveChangeListener([NotNull] NameValueCollection args,
+        internal static void DatabaseRemoveChangeListener([NotNull] NameValueCollection args,
             [NotNull] IReadOnlyDictionary<string, object> postBody,
             [NotNull] HttpListenerResponse response)
         {
@@ -214,23 +230,12 @@ namespace Couchbase.Lite.Testing
             response.WriteEmptyBody();
         }
 
-        public static void DatabaseSave([NotNull] NameValueCollection args,
+        internal static void DatabaseSave([NotNull] NameValueCollection args,
             [NotNull] IReadOnlyDictionary<string, object> postBody,
             [NotNull] HttpListenerResponse response)
         {
             With<Database>(args, "database", db => With<MutableDocument>(args, "document", doc => db.Save(doc)));
             response.WriteEmptyBody();
-        }
-
-        #endregion
-
-        #region Internal Methods
-
-        internal static void With<T>([NotNull]NameValueCollection args, string key, [NotNull]Action<T> action)
-        {
-            var databaseId = args.GetLong(key);
-            var db = MemoryMap.Get<T>(databaseId);
-            action(db);
         }
 
         #endregion

@@ -25,7 +25,6 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Net.Http;
 using System.Text;
 
 using JetBrains.Annotations;
@@ -43,7 +42,7 @@ namespace Couchbase.Lite.Testing
         #region Constants
 
         [NotNull]
-        private static readonly IReadOnlyDictionary<string, HandlerAction> RouteMap =
+        private static readonly IDictionary<string, HandlerAction> RouteMap =
             new Dictionary<string, HandlerAction>
             {
                 ["database_create"] = DatabaseMethods.DatabaseCreate,
@@ -82,7 +81,20 @@ namespace Couchbase.Lite.Testing
 
         #region Public Methods
 
-        public static void Handle([NotNull]Uri endpoint, [NotNull]Stream body, [NotNull]HttpListenerResponse response)
+        public static void Extend([NotNull]IDictionary<string, HandlerAction> extensions)
+        {
+            foreach (var pair in extensions) {
+                if (!RouteMap.ContainsKey(pair.Key)) {
+                    RouteMap[pair.Key] = pair.Value;
+                }
+            }
+        }
+
+        #endregion
+
+        #region Internal Methods
+
+        internal static void Handle([NotNull]Uri endpoint, [NotNull]Stream body, [NotNull]HttpListenerResponse response)
         {
             if (!RouteMap.TryGetValue(endpoint.AbsolutePath?.TrimStart('/'), out HandlerAction action)) {
                 response.WriteEmptyBody(HttpStatusCode.NotFound);
@@ -95,7 +107,7 @@ namespace Couchbase.Lite.Testing
                 var serializer = JsonSerializer.CreateDefault();
                 using (var reader = new JsonTextReader(new StreamReader(body, Encoding.UTF8, false, 8192, false))) {
                     reader.CloseInput = true;
-                    bodyObj = serializer?.Deserialize<Dictionary<string, object>>(reader);
+                    bodyObj = serializer?.Deserialize<Dictionary<string, object>>(reader) ?? new Dictionary<string, object>();
                 }
             } catch (Exception e) {
                 Debug.WriteLine($"Error deserializing POST body for {endpoint}: {e}");

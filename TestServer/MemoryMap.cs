@@ -28,7 +28,7 @@ using JetBrains.Annotations;
 
 namespace Couchbase.Lite.Testing
 {
-    internal static class MemoryMap
+    public static class MemoryMap
     {
         #region Constants
 

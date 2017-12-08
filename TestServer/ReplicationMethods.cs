@@ -25,8 +25,11 @@ using System.Collections.Specialized;
 using System.Net;
 
 using Couchbase.Lite.Sync;
+using Couchbase.Lite.Util;
 
 using JetBrains.Annotations;
+
+using Newtonsoft.Json.Linq;
 
 using static Couchbase.Lite.Testing.DatabaseMethods;
 
@@ -53,6 +56,20 @@ namespace Couchbase.Lite.Testing
                     ReplicatorType = replicatorType,
                     Continuous = continous
                 };
+
+                if (postBody.ContainsKey("auth")) {
+                    var authDict = (postBody["auth"] as JObject)?.ToObject<IReadOnlyDictionary<string, object>>();
+                    switch ((authDict?["type"] as string)?.ToLowerInvariant()) {
+                        case "basic":
+                            config.Authenticator = new BasicAuthenticator(authDict["username"] as string, authDict["password"] as string);
+                            break;
+                        case "session":
+                            config.Authenticator = new SessionAuthenticator(authDict["session"] as string, 
+                                authDict.ContainsKey("expires") ? (DateTimeOffset?)authDict.GetCast<DateTimeOffset>("expires") : null,
+                                "SyncGatewaySession");
+                            break;
+                    }
+                }
 
                 response.WriteBody(MemoryMap.New<Replicator>(config));
             });

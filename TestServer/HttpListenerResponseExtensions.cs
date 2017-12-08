@@ -29,7 +29,7 @@ using Newtonsoft.Json;
 
 namespace Couchbase.Lite.Testing
 {
-    internal static class HttpListenerResponseExtensions
+    public static class HttpListenerResponseExtensions
     {
         public static void WriteBody<T>([NotNull]this HttpListenerResponse response, T bodyObj, bool success = true)
         {
