@@ -26,6 +26,7 @@ namespace TestClient
             var directory = Path.GetDirectoryName(typeof(Program).Assembly.Location);
             var configText = File.ReadAllText(Path.Combine(directory, "Orchestration", "GatewayConfig.json"));
             using (var sg = new SyncGateway(null, configText)) {
+               
                 var sessionInfo =
                     await sg.CreateSessionAsync("seekrit", new Dictionary<string, object> { ["name"] = "pupshaw" });
                 sg.Session = sessionInfo.SessionId;

@@ -1,5 +1,5 @@
 ﻿// 
-//  CreateSessionResponse.cs
+//  AdminCreateSessionResponse.cs
 // 
 //  Author:
 //   Jim Borden  <jim.borden@couchbase.com>
@@ -20,12 +20,13 @@
 // 
 
 using System;
+using System.Collections.Generic;
 
 using Newtonsoft.Json;
 
 namespace TestClient.Orchestration
 {
-    public sealed class CreateSessionResponse
+    public sealed class AdminCreateSessionResponse
     {
         #region Properties
 
@@ -39,5 +40,26 @@ namespace TestClient.Orchestration
         public string SessionId { get; set; }
 
         #endregion
+    }
+
+    public sealed class SessionResponse
+    {
+        [JsonProperty("authentication_handlers")]
+        public IReadOnlyList<string> AuthHandlers { get; set; }
+
+        [JsonProperty("ok")]
+        public bool Ok { get; set; }
+
+        [JsonProperty("userCtx")]
+        public UserContext UserCtx { get; set; }
+
+        public sealed class UserContext
+        {
+            [JsonProperty("channels")]
+            public IReadOnlyDictionary<string, int> Channels { get; set; }
+
+            [JsonProperty("name")]
+            public string Name { get; set; }
+        }
     }
 }

@@ -90,13 +90,24 @@ namespace TestClient.Orchestration
 
         [NotNull]
         [ItemNotNull]
-        public Task<IReadOnlyList<IReadOnlyDictionary<string, object>>> BulkDocsAsync(string db,
-            IDictionary<string, object> body) => _publicApi.BulkDocsAsync(db, body);
+        public Task<AllDocsResponse> AllDocsAsync(string db, bool access = false, bool channels = false,
+            bool includeDocs = false, bool revs = false, bool updateSeq = false, int limit = Int32.MaxValue,
+            string[] keys = null, string startKey = null, string endKey = null) => _publicApi.GetAllDocsAsync(db,
+            access, channels, includeDocs, revs, updateSeq, limit, keys, startKey, endKey);
 
         [NotNull]
         [ItemNotNull]
-        public Task<CreateSessionResponse> CreateSessionAsync(string db, IDictionary<string, object> body) =>
-            _adminApi.CreateSessionAsync(db, body);
+        public Task<IReadOnlyList<BulkDocsResponseItem>> BulkDocsAsync(string db,
+            IDictionary<string, object> body) => _publicApi.PostBulkDocsAsync(db, body);
+
+        [NotNull]
+        [ItemNotNull]
+        public Task<AdminCreateSessionResponse> CreateSessionAsync(string db, IDictionary<string, object> body) =>
+            _adminApi.AdminPostSessionAsync(db, body);
+
+        [NotNull]
+        [ItemNotNull]
+        public Task<DbResponse> GetDbAsync([NotNull] string db) => _publicApi.GetDbAsync(db);
 
         [NotNull]
         public Task DeleteSessionAsync(string db, string sessionId) =>

@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 
 using Couchbase.Lite.Query;
 
@@ -42,6 +43,13 @@ namespace Couchbase.Lite.Testing
             var handle = args.GetLong(key);
             var db = MemoryMap.Get<T>(handle);
             action(db);
+        }
+
+        public static async Task AsyncWith<T>([NotNull]NameValueCollection args, string key, [NotNull]Func<T, Task> action)
+        {
+            var handle = args.GetLong(key);
+            var db = MemoryMap.Get<T>(handle);
+            await action(db);
         }
 
         #endregion
@@ -223,9 +231,9 @@ namespace Couchbase.Lite.Testing
             [NotNull] HttpListenerResponse response)
         {
             With<Database>(args, "database", db => With<DatabaseChangeListenerProxy>(args, "changeListener", l =>
-            {
-                db.Changed -= l.HandleChange;
-            }));
+                {
+                    db.Changed -= l.HandleChange;
+                }));
 
             response.WriteEmptyBody();
         }

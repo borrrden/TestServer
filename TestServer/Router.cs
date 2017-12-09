@@ -122,7 +122,7 @@ namespace Couchbase.Lite.Testing
             } catch (Exception e) {
                 Debug.WriteLine($"Error in handler for {endpoint}: {e}");
                 Console.WriteLine($"Error in handler for {endpoint}: {e.Message}");
-                response.WriteBody(e.Message.Replace("\r","").Replace('\n',' ') ?? String.Empty, false);
+                response.WriteBody(e.Message?.Replace("\r","")?.Replace('\n',' ') ?? String.Empty, false);
             }
         }
 
