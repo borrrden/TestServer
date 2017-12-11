@@ -6,6 +6,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
+using Couchbase.Lite.Sync;
+
 using JetBrains.Annotations;
 
 using Newtonsoft.Json;
@@ -25,12 +27,12 @@ namespace TestClient
 
             var directory = Path.GetDirectoryName(typeof(Program).Assembly.Location);
             var configText = File.ReadAllText(Path.Combine(directory, "Orchestration", "GatewayConfig.json"));
-            using (var sg = new SyncGateway(null, configText)) {
-               
+            using (var sgWrapper = new RemoteProxySyncGateway(null, configText)) {
+                var sg = sgWrapper.AsSyncGateway();
                 var sessionInfo =
-                    await sg.CreateSessionAsync("seekrit", new Dictionary<string, object> { ["name"] = "pupshaw" });
+                    await sg.Admin.PostSessionAsync("seekrit", new Dictionary<string, string> { ["name"] = "pupshaw" });
                 sg.Session = sessionInfo.SessionId;
-                await sg.BulkDocsAsync("seekrit", CreateDocuments()).ConfigureAwait(false);
+                await sg.Public.PostBulkDocsAsync("seekrit", CreateDocuments()).ConfigureAwait(false);
                 using (var db = new RemoteProxyDatabase("client")) {
                     var repl = new RemoteProxyReplication(db, sg.GetReplicationUrl("seekrit").AbsoluteUri, false, "pull",
                         RemoteProxyReplication.SessionAuthentication(sessionInfo.SessionId, sessionInfo.Expires));

@@ -1,0 +1,3 @@
+[submodule "vendor\\sync-gateway-dotnet-sdk"]
+	path = vendor\\sync-gateway-dotnet-sdk
+	url = https://github.com/borrrden/sync-gateway-dotnet-sdk

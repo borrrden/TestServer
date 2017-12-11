@@ -1,5 +1,5 @@
 ﻿// 
-//  SyncGateway.cs
+//  RemoteProxySyncGateway.cs
 // 
 //  Author:
 //   Jim Borden  <jim.borden@couchbase.com>
@@ -24,7 +24,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+
+using Couchbase.Lite.Sync;
 
 using JetBrains.Annotations;
 
@@ -32,7 +33,7 @@ using RestEase;
 
 namespace TestClient.Orchestration
 {
-    public sealed class SyncGateway : RemoteProxyObject
+    public sealed class RemoteProxySyncGateway : RemoteProxyObject
     {
         #region Constants
 
@@ -46,81 +47,30 @@ namespace TestClient.Orchestration
         #region Variables
 
         [NotNull]
-        private readonly ISyncGatewayAdminRESTApi _adminApi;
-
-        [NotNull]
-        private readonly ISyncGatewayRESTApi _publicApi;
-
-        [NotNull]
-        private readonly Uri _publicUri;
-
-        #endregion
-
-        #region Properties
-
-        public string Session
-        {
-            get => _publicApi.AuthCookie?.Split("=")?.LastOrDefault();
-            set => _publicApi.AuthCookie = $"SyncGatewaySession={value}";
-        }
+        private readonly SyncGateway _syncGateway;
 
         #endregion
 
         #region Constructors
 
-        public SyncGateway(string path, string config)
+        public RemoteProxySyncGateway(string path, string config)
             : base(OrchestrationApi.StartSyncGatewayAsync(path, new Dictionary<string, object> { ["config"] = config }).Result)
         {
+
             var publicPort = ParsePort(FindKeyValue(config, "interface"), 4984);
             var adminPort = ParsePort(FindKeyValue(config, "adminInterface"), 4985);
             var ipAddr = new Uri(Program.ServerUrl).Authority.Split(':').First();
             var secure = FindKeyValue(config, "SSLCert") != null && FindKeyValue(config, "SSLKey") != null;
             var scheme = secure ? "https" : "http";
-            var adminUrl = new Uri($"{scheme}://{ipAddr}:{adminPort}");
-            _publicUri = new Uri($"{scheme}://{ipAddr}:{publicPort}");
-            _publicApi = RestClient.For<ISyncGatewayRESTApi>(_publicUri)
-                         ?? throw new ApplicationException("Unable to create public SG REST API");
-            _adminApi = RestClient.For<ISyncGatewayAdminRESTApi>(adminUrl)
-                        ?? throw new ApplicationException("Unable to create admin SG REST API");
+            var baseUrl = new Uri($"{scheme}://{ipAddr}");
+            _syncGateway = new SyncGateway(baseUrl, publicPort, adminPort);
         }
 
         #endregion
 
         #region Public Methods
 
-        [NotNull]
-        [ItemNotNull]
-        public Task<AllDocsResponse> AllDocsAsync(string db, bool access = false, bool channels = false,
-            bool includeDocs = false, bool revs = false, bool updateSeq = false, int limit = Int32.MaxValue,
-            string[] keys = null, string startKey = null, string endKey = null) => _publicApi.GetAllDocsAsync(db,
-            access, channels, includeDocs, revs, updateSeq, limit, keys, startKey, endKey);
-
-        [NotNull]
-        [ItemNotNull]
-        public Task<IReadOnlyList<BulkDocsResponseItem>> BulkDocsAsync(string db,
-            IDictionary<string, object> body) => _publicApi.PostBulkDocsAsync(db, body);
-
-        [NotNull]
-        [ItemNotNull]
-        public Task<AdminCreateSessionResponse> CreateSessionAsync(string db, IDictionary<string, object> body) =>
-            _adminApi.AdminPostSessionAsync(db, body);
-
-        [NotNull]
-        [ItemNotNull]
-        public Task<DbResponse> GetDbAsync([NotNull] string db) => _publicApi.GetDbAsync(db);
-
-        [NotNull]
-        public Task DeleteSessionAsync(string db, string sessionId) =>
-            _publicApi.DeleteSessionAsync(db, $"SyncGatewaySession={sessionId}");
-
-        [NotNull]
-        public Uri GetReplicationUrl(string db)
-        {
-            var builder = new UriBuilder(_publicUri);
-            builder.Scheme = builder.Scheme == "http" ? "blip" : "blips";
-            builder.Path = db;
-            return builder.Uri;
-        }
+        public SyncGateway AsSyncGateway() => _syncGateway;
 
         #endregion
 
