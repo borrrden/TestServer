@@ -45,6 +45,7 @@ namespace Couchbase.Lite.Testing.NetCore
             [NotNull] HttpListenerResponse response)
         {
             With<Process>(args, "pid", p => p.Kill());
+            response.WriteEmptyBody();
         }
 
         public static void StartSyncGateway([NotNull] NameValueCollection args,
@@ -52,7 +53,8 @@ namespace Couchbase.Lite.Testing.NetCore
             [NotNull] HttpListenerResponse response)
         {
             var sgArgs = String.Empty;
-            var path = args.Get("path") ?? DefaultSyncGatewayPath();
+            var path = args.Get("path");
+            path = path != null ? Uri.UnescapeDataString(path) : DefaultSyncGatewayPath();
             if (postBody.ContainsKey("config")) {
                 var configPath = Path.Combine(Path.GetTempPath(), "sync_gateway_config.json");
                 File.WriteAllText(configPath, postBody["config"] as string);
