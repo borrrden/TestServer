@@ -18,7 +18,8 @@ namespace TestClient
 {
     class Program
     {
-        public const string ServerUrl = "http://localhost:55555/";
+        public const string ServerUrl = "http://192.168.1.5:55555/";
+        public const string SyncGatewayOrchestrationUrl = "http://192.168.1.2:55555/";
 
         static async Task Main(string[] args)
         {
@@ -34,8 +35,9 @@ namespace TestClient
                 sg.Session = sessionInfo.SessionId;
                 await sg.Public.PostBulkDocsAsync("seekrit", CreateDocuments()).ConfigureAwait(false);
                 using (var db = new RemoteProxyDatabase("client")) {
-                    var repl = new RemoteProxyReplication(db, sg.GetReplicationUrl("seekrit").AbsoluteUri, false, "pull",
-                        RemoteProxyReplication.SessionAuthentication(sessionInfo.SessionId, sessionInfo.Expires));
+                    
+                    var repl = new RemoteProxyReplication(db, sgWrapper.GetReplicationUrl("seekrit").AbsoluteUri, false, "pull",
+                        RemoteProxyReplication.BasicAuthentication("pupshaw", "frank"));
                     await repl.StartAsync().ConfigureAwait(false);
                     Console.WriteLine("Press any key to continue...");
                     Console.ReadKey(true);

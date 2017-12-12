@@ -14,6 +14,7 @@ namespace Couchbase.Lite.Testing.Android
             base.OnCreate(savedInstanceState);
 
             Couchbase.Lite.Support.Droid.Activate(ApplicationContext);
+            Couchbase.Lite.Support.Droid.EnableTextLogging();
 
             var listener = new TestServer();
             listener.Start();

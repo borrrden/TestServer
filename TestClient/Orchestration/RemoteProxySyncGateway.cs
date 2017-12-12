@@ -23,6 +23,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Text.RegularExpressions;
 
 using Couchbase.Lite.Sync;
@@ -39,7 +41,7 @@ namespace TestClient.Orchestration
 
         [NotNull] 
         private static readonly IOrchestrationRESTApi OrchestrationApi =
-            RestClient.For<IOrchestrationRESTApi>(Program.ServerUrl)
+            RestClient.For<IOrchestrationRESTApi>(Program.SyncGatewayOrchestrationUrl)
             ?? throw new ApplicationException("Unable to create Orchestration REST API");
 
         #endregion
@@ -48,6 +50,9 @@ namespace TestClient.Orchestration
 
         [NotNull]
         private readonly SyncGateway _syncGateway;
+
+        [NotNull]
+        private readonly Uri _replicationUrl;
 
         #endregion
 
@@ -59,11 +64,19 @@ namespace TestClient.Orchestration
 
             var publicPort = ParsePort(FindKeyValue(config, "interface"), 4984);
             var adminPort = ParsePort(FindKeyValue(config, "adminInterface"), 4985);
-            var ipAddr = new Uri(Program.ServerUrl).Authority.Split(':').First();
+            var ipAddr = new Uri(Program.SyncGatewayOrchestrationUrl).Authority.Split(':').First();
             var secure = FindKeyValue(config, "SSLCert") != null && FindKeyValue(config, "SSLKey") != null;
             var scheme = secure ? "https" : "http";
             var baseUrl = new Uri($"{scheme}://{ipAddr}");
             _syncGateway = new SyncGateway(baseUrl, publicPort, adminPort);
+            _replicationUrl = CreateReplicationUrl(baseUrl, secure, publicPort);
+        }
+
+        [NotNull]
+        private Uri CreateReplicationUrl([NotNull]Uri baseUrl, bool secure, int publicPort)
+        {
+            var scheme = secure ? "blips" : "blip";
+            return new Uri($"{scheme}://{baseUrl.Host}:{publicPort}");
         }
 
         #endregion
@@ -71,6 +84,9 @@ namespace TestClient.Orchestration
         #region Public Methods
 
         public SyncGateway AsSyncGateway() => _syncGateway;
+
+        [NotNull]
+        public Uri GetReplicationUrl(string dbName) => new Uri(_replicationUrl, dbName);
 
         #endregion
 

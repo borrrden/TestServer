@@ -15,6 +15,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\vendor\sync-gateway-dotnet-sdk\SyncGatewaySdk\SyncGatewaySdk.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Orchestration\GatewayConfig.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
