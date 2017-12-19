@@ -38,18 +38,18 @@ namespace Couchbase.Lite.Testing
     {
         #region Public Methods
 
-        public static void With<T>([NotNull]NameValueCollection args, string key, [NotNull]Action<T> action)
-        {
-            var handle = args.GetLong(key);
-            var db = MemoryMap.Get<T>(handle);
-            action(db);
-        }
-
         public static async Task AsyncWith<T>([NotNull]NameValueCollection args, string key, [NotNull]Func<T, Task> action)
         {
             var handle = args.GetLong(key);
             var db = MemoryMap.Get<T>(handle);
             await action(db);
+        }
+
+        public static void With<T>([NotNull]NameValueCollection args, string key, [NotNull]Action<T> action)
+        {
+            var handle = args.GetLong(key);
+            var db = MemoryMap.Get<T>(handle);
+            action(db);
         }
 
         #endregion
@@ -63,7 +63,7 @@ namespace Couchbase.Lite.Testing
             With<Database>(args, "database", db =>
             {
                 var listener = new DatabaseChangeListenerProxy();
-                db.Changed += listener.HandleChange;
+                listener.RemovalToken = db.AddChangeListener(listener.HandleChange);
                 var listenerId = MemoryMap.Store(listener);
                 response.WriteBody(listenerId);
             });
@@ -162,9 +162,9 @@ namespace Couchbase.Lite.Testing
             With<Database>(args, "database", db =>
             {
                 using (var query = Query.Query
-                    .Select(SelectResult.Expression(Expression.Meta().ID))
+                    .Select(SelectResult.Expression(Meta.ID))
                     .From(DataSource.Database(db))) {
-                    using (var result = query.Run()) {
+                    using (var result = query.Execute()) {
                         var ids = result.Select(x => x.GetString("id"));
                         response.WriteBody(ids);
                     }
@@ -197,9 +197,9 @@ namespace Couchbase.Lite.Testing
             {
                 var retVal = new Dictionary<string, object>();
                 using (var query = Query.Query
-                    .Select(SelectResult.Expression(Expression.Meta().ID))
+                    .Select(SelectResult.Expression(Meta.ID))
                     .From(DataSource.Database(db))) {
-                    using (var result = query.Run()) {
+                    using (var result = query.Execute()) {
                         foreach (var id in result.Select(x => x.GetString("id"))) {
                             using (var doc = db.GetDocument(id)) {
                                 retVal[id] = doc.ToDictionary();
@@ -231,9 +231,9 @@ namespace Couchbase.Lite.Testing
             [NotNull] HttpListenerResponse response)
         {
             With<Database>(args, "database", db => With<DatabaseChangeListenerProxy>(args, "changeListener", l =>
-                {
-                    db.Changed -= l.HandleChange;
-                }));
+            {
+                db.RemoveChangeListener(l.RemovalToken);
+            }));
 
             response.WriteEmptyBody();
         }
@@ -255,6 +255,8 @@ namespace Couchbase.Lite.Testing
 
         [NotNull]
         private readonly List<DatabaseChangedEventArgs> _changes = new List<DatabaseChangedEventArgs>();
+
+        public ListenerToken RemovalToken { get; set; }
 
         #endregion
 

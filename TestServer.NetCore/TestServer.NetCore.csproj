@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Couchbase.Lite.Support.NetDesktop" Version="2.0.0-db020" />
+    <PackageReference Include="Couchbase.Lite.Support.NetDesktop" Version="2.0.0-db021" />
     <PackageReference Include="Jint" Version="2.11.58" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="2.6.0" />
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="4.4.0" />
